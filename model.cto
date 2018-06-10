@@ -1,0 +1,29 @@
+namespace org.bp
+
+asset Organ identified by organID {
+    o String organID
+    o Status status
+}
+enum Status {
+  o INPOOL
+  o MATCHED
+}
+
+participant Donor identified by DonorKey {
+  o String DonorKey
+  o String patientData
+}
+
+participant Recepient identified by RecepientKey {
+  o String RecepientKey
+  o String patientData
+}
+
+transaction give {
+  o String data
+  --> Organ organ
+}
+
+transaction receive {
+  --> Organ organ
+}
