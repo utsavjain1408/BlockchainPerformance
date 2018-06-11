@@ -3,6 +3,7 @@ namespace org.bp
 asset Organ identified by organID {
     o String organID
     o Status status
+    o String data
 }
 enum Status {
   o INPOOL
