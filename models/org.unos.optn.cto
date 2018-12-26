@@ -24,6 +24,26 @@ participant SampleParticipant identified by participantId {
   o String lastName
 }
 
+participant HistocompatibilityLab identified by LabId {
+  o String LabId
+  o String firstName
+  o String lastName
+}
+
+participant Hospital identified by HospitalId {
+  o String HospitalId
+}
+
+participant Individuals identified by Id {
+  o String Id
+}
+
+participant OrganProcurementOrg identified by OPOId {
+  o String OPOId
+}
+
+
+
 asset SampleAsset identified by assetId {
   o String assetId
   --> SampleParticipant owner
@@ -40,3 +60,4 @@ event SampleEvent {
   o String oldValue
   o String newValue
 }
+ 
