@@ -1,0 +1,68 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+# ---------------------------------------------------------------------------
+# "OrdererOrgs" - Definition of organizations managing orderer nodes
+# ---------------------------------------------------------------------------
+OrdererOrgs:
+  # ---------------------------------------------------------------------------
+  # Orderer
+  # ---------------------------------------------------------------------------
+  - Name: Orderer
+    Domain: organ.com
+    Specs:
+      - Hostname: orderer
+
+PeerOrgs:
+  
+  - Name: Hospital
+    Domain: hospital.organ.com
+    EnableNodeOUs: true
+    # ---------------------------------------------------------------------------
+    Template:
+      Count: 2
+      # Start: 5
+      # Hostname: {{.Prefix}}{{.Index}} # default
+    # ---------------------------------------------------------------------------
+    # "Users"
+    # ---------------------------------------------------------------------------
+    # Count: The number of user accounts _in addition_ to Admin
+    # ---------------------------------------------------------------------------
+    Users:
+      Count: 1
+  # ---------------------------------------------------------------------------
+  # Org2: See "Org1" for full specification
+  # ---------------------------------------------------------------------------
+  - Name: OPO
+  # - Name: Org2
+    Domain: opo.organ.com
+    EnableNodeOUs: true
+    Template:
+      Count: 2
+    Users:
+      Count: 1
+  # ---------------------------------------------------------------------------
+  # Org3: Histocompatibility labotatories
+  # ---------------------------------------------------------------------------
+  - Name: HL
+  # - Name: Org2
+    Domain: histocompatibility.organ.com
+    EnableNodeOUs: true
+    Template:
+      Count: 2
+    Users:
+      Count: 1
+
+  # ---------------------------------------------------------------------------
+  # Org4: General Public
+  # ---------------------------------------------------------------------------
+  - Name: GP
+  # - Name: Org2
+    Domain: gp.organ.com
+    EnableNodeOUs: true
+    Template:
+      Count: 2
+    Users:
+      Count: 1

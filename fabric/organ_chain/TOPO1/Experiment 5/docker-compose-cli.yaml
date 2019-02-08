@@ -1,0 +1,136 @@
+ amount of time to wait before creating a batch
+    BatchTimeout: amount of time to wait before creating a batch
+    BatchTimeout: amount of time to wait before creating a batch
+    BatchTimeout:# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+version: '2'
+
+volumes:
+  orderer.organ.com:
+  peer0.hospital.organ.com:
+  peer1.hospital.organ.com:
+  peer0.histocompatibility.organ.com:
+  peer1.histocompatibility.organ.com:
+  peer0.opo.organ.com:
+  peer1.opo.organ.com:
+  peer0.gp.organ.com:
+  peer1.gp.organ.com:
+
+networks:
+  organ_chain_network:
+
+services:
+
+  orderer.organ.com:
+    extends:
+      file:   base/docker-compose-base.yaml
+      service: orderer.organ.com
+    container_name: orderer.organ.com
+    networks:
+      - organ_chain_network
+
+  peer0.hospital.organ.com:
+    container_name: peer0.hospital.organ.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer0.hospital.organ.com
+    networks:
+      - organ_chain_network
+
+  peer1.hospital.organ.com:
+    container_name: peer1.hospital.organ.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer1.hospital.organ.com
+    networks:
+      - organ_chain_network
+
+  peer0.histocompatibility.organ.com:
+    container_name: peer0.histocompatibility.organ.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer0.histocompatibility.organ.com
+    networks:
+      - organ_chain_network
+
+  peer1.histocompatibility.organ.com:
+    container_name: peer1.histocompatibility.organ.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer1.histocompatibility.organ.com
+    networks:
+      - organ_chain_network
+
+  peer0.opo.organ.com:
+    container_name: peer0.opo.organ.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer0.opo.organ.com
+    networks:
+      - organ_chain_network
+
+  peer1.opo.organ.com:
+    container_name: peer1.opo.organ.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer1.opo.organ.com
+    networks:
+      - organ_chain_network
+
+  peer0.gp.organ.com:
+    container_name: peer0.gp.organ.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer0.gp.organ.com
+    networks:
+      - organ_chain_network
+
+  peer1.gp.organ.com:
+    container_name: peer1.gp.organ.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer1.gp.organ.com
+    networks:
+      - organ_chain_network
+
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools
+    tty: true
+    stdin_open: true
+    environment:
+      - GOPATH=/opt/gopath
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - FABRIC_LOGGING_SPEC=DEBUG
+      # - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_ID=cli
+      - CORE_PEER_ADDRESS=peer0.hospital.organ.com:7051
+      - CORE_PEER_LOCALMSPID=HospitalMSP
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hoapital.organ.com/peers/peer0.hospital.organ.com/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hoapital.organ.com/peers/peer0.hospital.organ.com/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hoapital.organ.com/peers/peer0.hospital.organ.com/tls/ca.crt
+      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hoapital.organ.com/users/Admin@hospital.organ.com/msp
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash
+    volumes:
+        - /var/run/:/host/var/run/
+        - ./../chaincode/:/opt/gopath/src/github.com/chaincode
+        - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
+        - ./scripts:/opt/gopath/src/github.com/hyperledger/fabric/peer/scripts/
+        - ./channel-artifacts:/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts
+    depends_on:
+      - orderer.organ.com
+      - peer0.hospital.organ.com
+      - peer1.hospital.organ.com
+      - peer0.histocompatibility.organ.com
+      - peer1.histocompatibility.organ.com
+      - peer0.opo.organ.com
+      - peer1.opo.organ.com
+      - peer0.gp.organ.com
+      - peer1.gp.organ.com
+    networks:
+      - organ_chain_network

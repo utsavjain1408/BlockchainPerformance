@@ -1,0 +1,230 @@
+Steps for the experiment.
+
+#1. Generate Arttifacts 
+#    a. Generate cryptographic material
+#        i. cryptogen
+            rm -rf crypto-config
+            cryptogen generate --config=./crypto-config.yaml
+
+#    b. Generate oher Arttifacts
+        export FABRIC_CFG_PATH=$PWD
+        rm -rf ./channel-artifacts/*
+#        i. Create Genesis block
+            
+            configtxgen -profile OrganChainOrdererGenesis \
+                -channelID organ-sys-channel -outputBlock ./channel-artifacts/genesis.block
+        
+#        ii. Generate Channel Transaction Artifacts
+            
+            export CHANNEL_NAME=organ-channel  && configtxgen \
+                -profile OrganChainChannel -outputCreateChannelTx \
+                ./channel-artifacts/channel.tx -channelID $CHANNEL_NAME
+
+#        iii. Specify Anchor peer for each organization
+            
+            configtxgen -profile OrganChainChannel -outputAnchorPeersUpdate \
+                ./channel-artifacts/HospitalMSPanchors.tx \
+                -channelID $CHANNEL_NAME -asOrg HospitalMSP
+
+            configtxgen -profile OrganChainChannel -outputAnchorPeersUpdate \
+                ./channel-artifacts/HLMSPanchors.tx \
+                -channelID $CHANNEL_NAME -asOrg HLMSP
+
+            configtxgen -profile OrganChainChannel -outputAnchorPeersUpdate \
+                ./channel-artifacts/OPOMSPanchors.tx \
+                -channelID $CHANNEL_NAME -asOrg OPOMSP
+
+            configtxgen -profile OrganChainChannel -outputAnchorPeersUpdate \
+                ./channel-artifacts/GPMSPanchors.tx \
+                -channelID $CHANNEL_NAME -asOrg GPMSP
+
+#2. Start Netwrok
+#    a. Start Docker Nodes
+        export COMPOSE_PROJECT_NAME=''
+        docker-compose -p '' -f  docker-compose-cli.yaml up -d 
+    
+#    b. Create Channel
+        docker exec -it cli bash
+
+        export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hospital.organ.com/users/Admin@hospital.organ.com/msp
+        export CORE_PEER_ADDRESS=peer0.hospital.organ.com:7051
+        export CORE_PEER_LOCALMSPID="HospitalMSP"
+        export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hospital.organ.com/peers/peer0.hospital.organ.com/tls/ca.crt
+
+        export CHANNEL_NAME=organ-channel
+
+        peer channel create -o orderer.organ.com:7050 \
+            -c $CHANNEL_NAME -f ./channel-artifacts/channel.tx \
+            --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/organ.com/orderers/orderer.organ.com/msp/tlscacerts/tlsca.organ.com-cert.pem
+            
+#    c. Join Peers
+
+
+        # Environment variables for peer0.hospital
+
+        export=CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hospital.organ.com/users/Admin@hospital.organ.com/msp
+        export=CORE_PEER_ADDRESS=peer0.hospital.organ.com:7051
+        export=CORE_PEER_LOCALMSPID="HospitalMSP"
+        export=CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hospital.organ.com/peers/peer0.hospital.organ.com/tls/ca.crt
+        peer channel join -b organ-channel.block
+
+        # Environment variables for peer1.hospital
+
+        CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hospital.organ.com/users/Admin@hospital.organ.com/msp
+        CORE_PEER_ADDRESS=peer1.hospital.organ.com:7051
+        CORE_PEER_LOCALMSPID="HospitalMSP"
+        CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hospital.organ.com/peers/peer1.hospital.organ.com/tls/ca.crt
+        peer channel join -b organ-channel.block
+
+        # Environment variables for peer0.hl
+
+        CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/histocompatibility.organ.com/users/Admin@histocompatibility.organ.com/msp
+        CORE_PEER_ADDRESS=peer0.histocompatibility.organ.com:7051
+        CORE_PEER_LOCALMSPID="HLMSP"
+        CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/histocompatibility.organ.com/peers/peer0.histocompatibility.organ.com/tls/ca.crt
+        peer channel join -b organ-channel.block
+
+        # Environment variables for peer1.hl
+
+        CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/histocompatibility.organ.com/users/Admin@histocompatibility.organ.com/msp
+        CORE_PEER_ADDRESS=peer1.histocompatibility.organ.com:7051
+        CORE_PEER_LOCALMSPID="HLMSP"
+        CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/histocompatibility.organ.com/peers/peer1.histocompatibility.organ.com/tls/ca.crt
+        peer channel join -b organ-channel.block
+
+        # Environment variables for peer0.opo
+
+        export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/opo.organ.com/users/Admin@opo.organ.com/msp
+        export CORE_PEER_ADDRESS=peer0.opo.organ.com:7051
+        export CORE_PEER_LOCALMSPID="OPOMSP"
+        export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/opo.organ.com/peers/peer0.opo.organ.com/tls/ca.crt
+        peer channel join -b organ-channel.block
+
+        # Environment variables for peer1.opo
+
+        export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/opo.organ.com/users/Admin@opo.organ.com/msp
+        export CORE_PEER_ADDRESS=peer1.opo.organ.com:7051
+        export CORE_PEER_LOCALMSPID="OPOMSP"
+        export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/opo.organ.com/peers/peer1.opo.organ.com/tls/ca.crt
+        peer channel join -b organ-channel.block
+
+        # Environment variables for peer0.gp
+
+        export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/gp.organ.com/users/Admin@gp.organ.com/msp
+        export CORE_PEER_ADDRESS=peer0.gp.organ.com:7051
+        export CORE_PEER_LOCALMSPID="GPMSP"
+        export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/gp.organ.com/peers/peer0.gp.organ.com/tls/ca.crt
+        peer channel join -b organ-channel.block
+
+
+        # Environment variables for peer1.gp
+
+        export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/gp.organ.com/users/Admin@gp.organ.com/msp
+        export CORE_PEER_ADDRESS=peer1.gp.organ.com:7051
+        export CORE_PEER_LOCALMSPID="GPMSP"
+        export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/gp.organ.com/peers/peer1.gp.organ.com/tls/ca.crt
+        peer channel join -b organ-channel.block
+
+#    d. Update Anchor Peers
+        #i. For Hospital
+        export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hospital.organ.com/users/Admin@hospital.organ.com/msp
+        export CORE_PEER_ADDRESS=peer0.hospital.organ.com:7051 CORE_PEER_LOCALMSPID="HospitalMSP" 
+        export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hospital.organ.com/peers/peer0.hospital.organ.com/tls/ca.crt 
+        peer channel update -o orderer.organ.com:7050 \
+            -c $CHANNEL_NAME -f ./channel-artifacts/HospitalMSPanchors.tx \
+            --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/organ.com/orderers/orderer.organ.com/msp/tlscacerts/tlsca.organ.com-cert.pem
+       
+        #ii. For OPO
+        export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/opo.organ.com/users/Admin@opo.organ.com/msp
+        export CORE_PEER_ADDRESS=peer0.opo.organ.com:7051 CORE_PEER_LOCALMSPID="OPOMSP" 
+        export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/opo.organ.com/peers/peer0.opo.organ.com/tls/ca.crt 
+        peer channel update -o orderer.organ.com:7050 \
+            -c $CHANNEL_NAME -f ./channel-artifacts/OPOMSPanchors.tx \
+            --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/organ.com/orderers/orderer.organ.com/msp/tlscacerts/tlsca.organ.com-cert.pem
+       
+
+        #iii. For HL
+        export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/histocompatibility.organ.com/users/Admin@histocompatibility.organ.com/msp
+        export CORE_PEER_ADDRESS=peer0.histocompatibility.organ.com:7051 CORE_PEER_LOCALMSPID="HLMSP" 
+        export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/histocompatibility.organ.com/peers/peer0.histocompatibility.organ.com/tls/ca.crt 
+        peer channel update -o orderer.organ.com:7050 \
+            -c $CHANNEL_NAME -f ./channel-artifacts/HLMSPanchors.tx \
+            --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/organ.com/orderers/orderer.organ.com/msp/tlscacerts/tlsca.organ.com-cert.pem
+       
+
+        #iv. For GP
+        export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/gp.organ.com/users/Admin@gp.organ.com/msp
+        export CORE_PEER_ADDRESS=peer0.gp.organ.com:7051 CORE_PEER_LOCALMSPID="GPMSP" 
+        export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/gp.organ.com/peers/peer0.gp.organ.com/tls/ca.crt 
+        peer channel update -o orderer.organ.com:7050 \
+            -c $CHANNEL_NAME -f ./channel-artifacts/GPMSPanchors.tx \
+            --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/organ.com/orderers/orderer.organ.com/msp/tlscacerts/tlsca.organ.com-cert.pem
+       
+
+     
+#    e. Run peer chaincode 
+#        i. Init
+#            1. For hospital
+                export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hospital.organ.com/users/Admin@hospital.organ.com/msp
+                export CORE_PEER_ADDRESS=peer0.hospital.organ.com:7051 CORE_PEER_LOCALMSPID="HospitalMSP"
+                export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hospital.organ.com/peers/peer0.hospital.organ.com/tls/ca.crt 
+   
+                peer chaincode install -n organcc -v 1.0 \
+                    -l node -p /opt/gopath/src/github.com/chaincode/
+
+#            2. For OPOs
+                export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/opo.organ.com/users/Admin@opo.organ.com/msp
+                export CORE_PEER_ADDRESS=peer0.opo.organ.com:7051 CORE_PEER_LOCALMSPID="OPOMSP" 
+                export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/opo.organ.com/peers/peer0.opo.organ.com/tls/ca.crt 
+                
+                peer chaincode install -n organcc -v 1.0 \
+                    -l node -p /opt/gopath/src/github.com/chaincode/      
+#            3. For Hls
+                export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/histocompatibility.organ.com/users/Admin@histocompatibility.organ.com/msp
+                export CORE_PEER_ADDRESS=peer0.histocompatibility.organ.com:7051 CORE_PEER_LOCALMSPID="HLMSP" 
+                export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/histocompatibility.organ.com/peers/peer0.histocompatibility.organ.com/tls/ca.crt 
+                
+                peer chaincode install -n organcc -v 1.0 \
+                    -l node -p /opt/gopath/src/github.com/chaincode/      
+
+#            4. For GPs
+                export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/gp.organ.com/users/Admin@gp.organ.com/msp
+                export CORE_PEER_ADDRESS=peer0.gp.organ.com:7051 CORE_PEER_LOCALMSPID="GPMSP" 
+                export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/gp.organ.com/peers/peer0.gp.organ.com/tls/ca.crt 
+                
+                peer chaincode install -n organcc -v 1.0 \
+                    -l node -p /opt/gopath/src/github.com/chaincode/
+
+#        ii. Instantiate
+            export CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_organ_chain_network
+            
+            peer chaincode instantiate -o orderer.organ.com:7050 \
+                --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/organ.com/orderers/orderer.organ.com/msp/tlscacerts/tlsca.organ.com-cert.pem \
+                -C $CHANNEL_NAME -n organcc -l node -v 1.0 -c '{"Args":["initOrgan","organ__1", "heart", "This is some donor info"]}' -P "AND ('HospitalMSP.peer','OPOMSP.peer', 'HLMSP.peer', 'GPMSP.peer')"
+
+
+#        iii. Invoke
+            peer chaincode invoke -o orderer.organ.com:7050 --tls true --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/organ.com/orderers/orderer.organ.com/msp/tlscacerts/tlsca.organ.com-cert.pem -C $CHANNEL_NAME -n mycc --peerAddresses peer0.org1.organ.com:7051 --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.organ.com/peers/peer0.org1.organ.com/tls/ca.crt --peerAddresses peer0.org2.organ.com:7051 --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org2.organ.com/peers/peer0.org2.organ.com/tls/ca.crt -c '{"Args":["invoke","a","b","10"]}'
+
+#        iv. Query
+            peer chaincode query -C $CHANNEL_NAME -n mycc -c '{"Args":["query","a"]}'
+
+
+#### Referenece
+#1. Remove all running containers
+    docker rm -f $(docker ps -aq)
+#2. Remove all unused volumes
+    Y | docker volume prune
+
+3. Discover
+    Persisting configuration 
+        discover --configFile conf.yaml --peerTLSCA tls/ca.crt --userKey msp/keystore/ea4f6a38ac7057b6fa9502c2f5f39f182e320f71f667749100fe7dd94c23ce43_sk \
+            --userCert msp/signcerts/User1\@org1.example.com-cert.pem  --MSP Org1MSP saveConfig
+
+
+
+$ discover --configFile crypto-config.yaml peers --channel organ-channel  --server peer0.hospital.organ.com:7051
+$ discover --peerTLSCA tls/ca.crt --userKey msp/keystore/cf31339d09e8311ac9ca5ed4e27a104a7f82f1e5904b3296a170ba4725ffde0d_sk \
+    --userCert msp/signcerts/Admin\@org1.example.com-cert.pem \
+    --MSP Org1MSP --tlsCert tls/client.crt --tlsKey tls/client.key peers \
+    --server peer0.org1.example.com:7051
