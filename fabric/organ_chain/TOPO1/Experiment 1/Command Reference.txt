@@ -228,3 +228,9 @@ $ discover --peerTLSCA tls/ca.crt --userKey msp/keystore/cf31339d09e8311ac9ca5ed
     --userCert msp/signcerts/Admin\@org1.example.com-cert.pem \
     --MSP Org1MSP --tlsCert tls/client.crt --tlsKey tls/client.key peers \
     --server peer0.org1.example.com:7051
+
+4. Print Log 
+grc sudo  tail -n 40 `docker inspect --format='{{.LogPath}}' 651` |  tr "\000-\011\013-\037\177-\377" "."
+
+5. 
+ os.system("""peer chaincode invoke -o orderer.example.com:7050 --tls true --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C $CHANNEL_NAME -n mycc --peerAddresses peer0.org1.example.com:7051 --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses peer0.org2.example.com:7051 --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt -c '{"Args":["query","a"]}'""")
