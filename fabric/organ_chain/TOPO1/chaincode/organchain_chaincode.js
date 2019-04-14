@@ -4,6 +4,23 @@
 # SPDX-License-Identifier: Apache-2.0
 */
 
+//peer chaincode invoke -c myc -n organchain -c '{"Args":["initOrgan", "341","Liver", "STUFF"]}' -C myc
+//peer chaincode invoke -c myc -n organchain -c '{"Args":["initOrgan", "342","Intestine", "STUFF"]}' -C myc
+//peer chaincode invoke -c myc -n organchain -c '{"Args":["initOrgan", "343","Kidney", "STUFF"]}' -C myc
+
+//peer chaincode invoke -c myc -n organchain -c '{"Args":["initCandidate", "123","Kidney", "STUFF"]}' -C myc
+//peer chaincode invoke -c myc -n organchain -c '{"Args":["initCandidate", "124","Liver", "STUFF"]}' -C myc
+//peer chaincode invoke -c myc -n organchain -c '{"Args":["initCandidate", "125","Intestine", "STUFF"]}' -C myc
+
+
+// peer chaincode query -C myc -n organchain -c '{"Args":["readOrgan","341"]}'
+// peer chaincode query -C myc -n organchain -c '{"Args":["readOrgan","342"]}'
+// peer chaincode query -C myc -n organchain -c '{"Args":["readOrgan","342"]}'
+
+// peer chaincode query -C myc -n organchain -c '{"Args":["readCandidate","123"]}'
+// peer chaincode query -C myc -n organchain -c '{"Args":["readCandidate","124"]}'
+// peer chaincode query -C myc -n organchain -c '{"Args":["readCandidate","125"]}'
+
 // ====CHAINCODE EXECUTION SAMPLES (CLI) ==================
 
 // ==== Invoke marbles ====

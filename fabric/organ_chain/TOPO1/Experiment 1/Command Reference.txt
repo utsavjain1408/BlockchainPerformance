@@ -172,6 +172,13 @@ Steps for the experiment.
                 peer chaincode install -n organcc -v 1.0 \
                     -l node -p /opt/gopath/src/github.com/chaincode/
 
+                export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hospital.organ.com/users/Admin@hospital.organ.com/msp
+                export CORE_PEER_ADDRESS=peer1.hospital.organ.com:7051 CORE_PEER_LOCALMSPID="HospitalMSP"
+                export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hospital.organ.com/peers/peer1.hospital.organ.com/tls/ca.crt 
+   
+                peer chaincode install -n organcc -v 1.0 \
+                    -l node -p /opt/gopath/src/github.com/chaincode/
+
 #            2. For OPOs
                 export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/opo.organ.com/users/Admin@opo.organ.com/msp
                 export CORE_PEER_ADDRESS=peer0.opo.organ.com:7051 CORE_PEER_LOCALMSPID="OPOMSP" 
@@ -179,10 +186,25 @@ Steps for the experiment.
                 
                 peer chaincode install -n organcc -v 1.0 \
                     -l node -p /opt/gopath/src/github.com/chaincode/      
+
+                export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/opo.organ.com/users/Admin@opo.organ.com/msp
+                export CORE_PEER_ADDRESS=peer1.opo.organ.com:7051 CORE_PEER_LOCALMSPID="OPOMSP" 
+                export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/opo.organ.com/peers/peer1.opo.organ.com/tls/ca.crt 
+                
+                peer chaincode install -n organcc -v 1.0 \
+                    -l node -p /opt/gopath/src/github.com/chaincode/      
+
 #            3. For Hls
                 export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/histocompatibility.organ.com/users/Admin@histocompatibility.organ.com/msp
                 export CORE_PEER_ADDRESS=peer0.histocompatibility.organ.com:7051 CORE_PEER_LOCALMSPID="HLMSP" 
                 export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/histocompatibility.organ.com/peers/peer0.histocompatibility.organ.com/tls/ca.crt 
+                
+                peer chaincode install -n organcc -v 1.0 \
+                    -l node -p /opt/gopath/src/github.com/chaincode/  
+
+                export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/histocompatibility.organ.com/users/Admin@histocompatibility.organ.com/msp
+                export CORE_PEER_ADDRESS=peer1.histocompatibility.organ.com:7051 CORE_PEER_LOCALMSPID="HLMSP" 
+                export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/histocompatibility.organ.com/peers/peer1.histocompatibility.organ.com/tls/ca.crt 
                 
                 peer chaincode install -n organcc -v 1.0 \
                     -l node -p /opt/gopath/src/github.com/chaincode/      
@@ -195,16 +217,48 @@ Steps for the experiment.
                 peer chaincode install -n organcc -v 1.0 \
                     -l node -p /opt/gopath/src/github.com/chaincode/
 
+                export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/gp.organ.com/users/Admin@gp.organ.com/msp
+                export CORE_PEER_ADDRESS=peer1.gp.organ.com:7051 CORE_PEER_LOCALMSPID="GPMSP" 
+                export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/gp.organ.com/peers/peer1.gp.organ.com/tls/ca.crt 
+                
+                peer chaincode install -n organcc -v 1.0 \
+                    -l node -p /opt/gopath/src/github.com/chaincode/
+
 #        ii. Instantiate
-            export CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_organ_chain_network
+            export CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=experiment1_organ_chain_network
             
             peer chaincode instantiate -o orderer.organ.com:7050 \
                 --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/organ.com/orderers/orderer.organ.com/msp/tlscacerts/tlsca.organ.com-cert.pem \
-                -C $CHANNEL_NAME -n organcc -l node -v 1.0 -c '{"Args":["initOrgan","organ__1", "heart", "This is some donor info"]}' -P "AND ('HospitalMSP.peer','OPOMSP.peer', 'HLMSP.peer', 'GPMSP.peer')"
+                -C organ-channel -n organcc -l node -v 1.0 -c '{"Args":["initOrgan","123", "heart", "This is some donor info"]}' -P "OR ('HospitalMSP.peer','OPOMSP.peer', 'HLMSP.peer', 'GPMSP.peer')"
 
 
 #        iii. Invoke
-            peer chaincode invoke -o orderer.organ.com:7050 --tls true --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/organ.com/orderers/orderer.organ.com/msp/tlscacerts/tlsca.organ.com-cert.pem -C $CHANNEL_NAME -n mycc --peerAddresses peer0.org1.organ.com:7051 --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.organ.com/peers/peer0.org1.organ.com/tls/ca.crt --peerAddresses peer0.org2.organ.com:7051 --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org2.organ.com/peers/peer0.org2.organ.com/tls/ca.crt -c '{"Args":["invoke","a","b","10"]}'
+            peer chaincode invoke -o orderer.organ.com:7050 --tls true \
+            --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/organ.com/orderers/orderer.organ.com/msp/tlscacerts/tlsca.organ.com-cert.pem
+            -C $CHANNEL_NAME -n organcc \
+            --peerAddresses peer0.hospital.organ.com:7051 \
+            --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hospital.organ.com/peers/peer0.hospital.organ.com/tls/ca.crt \
+            --peerAddresses peer0.gp.organ.com:7051 \
+            --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/gp.organ.com/peers/peer0.gp.organ.com/tls/ca.crt \
+            -c '{"Args":["initOrgan","organ__1","Heart","Thsi is a super long JSON"]}' 
+
+ peer chaincode invoke -o orderer.organ.com:7050 --tls true \
+    --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/organ.com/orderers/orderer.organ.com/msp/tlscacerts/tlsca.organ.com-cert.pem \
+     -C organ-channel -n organcc \
+     --peerAddresses peer0.hospital.organ.com:7051 \
+     --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hospital.organ.com/peers/peer0.hospital.organ.com/tls/ca.crt \
+     --peerAddresses peer0.gp.organ.com:7051 \
+     --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/gp.organ.com/peers/peer0.gp.organ.com/tls/ca.crt \
+     -c'{"Args":["initOrgan","1233","Heart","Thsi is a super long JdSON"]}' 
+
+ peer chaincode invoke -o orderer.organ.com:7050 --tls true \
+    --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/organ.com/orderers/orderer.organ.com/msp/tlscacerts/tlsca.organ.com-cert.pem \
+     -C organ-channel -n organcc \
+     --peerAddresses peer0.hospital.organ.com:7051 \
+     --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hospital.organ.com/peers/peer0.hospital.organ.com/tls/ca.crt \
+     --peerAddresses peer0.gp.organ.com:7051 \
+     --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/gp.organ.com/peers/peer0.gp.organ.com/tls/ca.crt \
+     -c'{"Args":["readOrgan","1233"]}' 
 
 #        iv. Query
             peer chaincode query -C $CHANNEL_NAME -n mycc -c '{"Args":["query","a"]}'
@@ -213,7 +267,8 @@ Steps for the experiment.
 #### Referenece
 #1. Remove all running containers
     docker rm -f $(docker ps -aq)
-#2. Remove all unused volumes
+#2. Remove all unused volumes and networks
+    docker network prune
     Y | docker volume prune
 
 3. Discover

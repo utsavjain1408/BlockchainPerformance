@@ -13,7 +13,7 @@ services:
       # the following setting starts chaincode containers on the same
       # bridge network as the peers
       # https://docs.docker.com/compose/networking/
-      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=organ_chain_network
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=experiment1_organ_chain_network
       - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.hospital.organ.com:7051
       # - FABRIC_LOGGING_SPEC=INFO
       - FABRIC_LOGGING_SPEC=DEBUG

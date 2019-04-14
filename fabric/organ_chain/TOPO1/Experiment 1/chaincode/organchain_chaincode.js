@@ -14,6 +14,8 @@
 // peer chaincode invoke -C myc1 -n marbles -c '{"Args":["transferMarblesBasedOnColor","blue","jerry"]}'
 // peer chaincode invoke -C myc1 -n marbles -c '{"Args":["delete","marble1"]}'
 
+// peer chaincode invoke -C organ-channel -n organcc -c '{"Args":["initOrgan","123","heart","THis is a good heart"]}'
+
 // ==== Query marbles ====
 // peer chaincode query -C myc1 -n marbles -c '{"Args":["readMarble","marble1"]}'
 // peer chaincode query -C myc1 -n marbles -c '{"Args":["getMarblesByRange","marble1","marble3"]}'
@@ -28,7 +30,7 @@
 // peer chaincode query -C myc1 -n marbles -c '{"Args":["queryMarblesWithPagination","{\"selector\":{\"owner\":\"tom\"}}","3",""]}'
 
 // ====CHAINCODE EXECUTION SAMPLES (CLI) ==================
-// peer chaincode invoke -C mychannel -n organs -c '{"Args":["initOrgan","Organ001","heart","The very long json"]}'
+// peer chaincode invoke -C $CHANNEL_NAME -n organs -c '{"Args":["initOrgan","Organ001","heart","The very long json"]}'
 
 
 // ====CHAINCODE INSTALLATION ===
