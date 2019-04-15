@@ -253,12 +253,40 @@ Steps for the experiment.
 
  peer chaincode invoke -o orderer.organ.com:7050 --tls true \
     --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/organ.com/orderers/orderer.organ.com/msp/tlscacerts/tlsca.organ.com-cert.pem \
-     -C organ-channel -n organcc \
-     --peerAddresses peer0.hospital.organ.com:7051 \
-     --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hospital.organ.com/peers/peer0.hospital.organ.com/tls/ca.crt \
-     --peerAddresses peer0.gp.organ.com:7051 \
-     --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/gp.organ.com/peers/peer0.gp.organ.com/tls/ca.crt \
-     -c'{"Args":["readOrgan","1233"]}' 
+    -C organ-channel -n organcc \
+    --peerAddresses peer0.hospital.organ.com:7051 \
+    --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hospital.organ.com/peers/peer0.hospital.organ.com/tls/ca.crt \
+    --peerAddresses peer0.gp.organ.com:7051 \
+    --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/gp.organ.com/peers/peer0.gp.organ.com/tls/ca.crt \
+    --peerAddresses peer0.histocompatibility.organ.com:7051 \
+    --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/histocompatibility.organ.com/peers/peer0.histocompatibility.organ.com/tls/ca.crt \
+    --peerAddresses peer0.opo.organ.com:7051 \
+    --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/opo.organ.com/peers/peer0.opo.organ.com/tls/ca.crt \
+    -c'{"Args":["readOrgan","1233"]}' 
+
+
+ peer chaincode invoke -o orderer.organ.com:7050 --tls true \
+    --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/organ.com/orderers/orderer.organ.com/msp/tlscacerts/tlsca.organ.com-cert.pem \
+    -C organ-channel -n organcc \
+    --peerAddresses peer0.hospital.organ.com:7051 \
+    --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hospital.organ.com/peers/peer0.hospital.organ.com/tls/ca.crt \
+    --peerAddresses peer0.gp.organ.com:7051 \
+    --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/gp.organ.com/peers/peer0.gp.organ.com/tls/ca.crt \
+    --peerAddresses peer0.histocompatibility.organ.com:7051 \
+    --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/histocompatibility.organ.com/peers/peer0.histocompatibility.organ.com/tls/ca.crt \
+    --peerAddresses peer0.opo.organ.com:7051 \
+    --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/opo.organ.com/peers/peer0.opo.organ.com/tls/ca.crt \
+    -c'{"Args":["initOrgan","1233","Heart","Thsi is a super long JdSON"]}' 
+
+ peer chaincode invoke -o orderer.organ.com:7050 --tls true \
+    --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/organ.com/orderers/orderer.organ.com/msp/tlscacerts/tlsca.organ.com-cert.pem \
+    -C organ-channel -n organcc \
+    --peerAddresses peer0.hospital.organ.com:7051 \
+    --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hospital.organ.com/peers/peer0.hospital.organ.com/tls/ca.crt \
+    --peerAddresses peer0.gp.organ.com:7051 \
+    --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/gp.organ.com/peers/peer0.gp.organ.com/tls/ca.crt \
+    -c'{"Args":["readOrgan","1233"]}' 
+
 
 #        iv. Query
             peer chaincode query -C $CHANNEL_NAME -n mycc -c '{"Args":["query","a"]}'
