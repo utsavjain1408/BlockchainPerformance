@@ -8,26 +8,9 @@
 
 // ==== Invoke marbles ====
 // peer chaincode invoke -C myc1 -n marbles -c '{"Args":["initMarble","marble1","blue","35","tom"]}'
-// peer chaincode invoke -C myc1 -n marbles -c '{"Args":["initMarble","marble2","red","50","tom"]}'
-// peer chaincode invoke -C myc1 -n marbles -c '{"Args":["initMarble","marble3","blue","70","tom"]}'
-// peer chaincode invoke -C myc1 -n marbles -c '{"Args":["transferMarble","marble2","jerry"]}'
-// peer chaincode invoke -C myc1 -n marbles -c '{"Args":["transferMarblesBasedOnColor","blue","jerry"]}'
-// peer chaincode invoke -C myc1 -n marbles -c '{"Args":["delete","marble1"]}'
 
 // peer chaincode invoke -C organ-channel -n organcc -c '{"Args":["initOrgan","123","heart","THis is a good heart"]}'
 
-// ==== Query marbles ====
-// peer chaincode query -C myc1 -n marbles -c '{"Args":["readMarble","marble1"]}'
-// peer chaincode query -C myc1 -n marbles -c '{"Args":["getMarblesByRange","marble1","marble3"]}'
-// peer chaincode query -C myc1 -n marbles -c '{"Args":["getHistoryForMarble","marble1"]}'
-// peer chaincode query -C myc1 -n marbles -c '{"Args":["getMarblesByRangeWithPagination","marble1","marble3","3",""]}'
-
-// Rich Query (Only supported if CouchDB is used as state database):
-// peer chaincode query -C myc1 -n marbles -c '{"Args":["queryMarblesByOwner","tom"]}'
-// peer chaincode query -C myc1 -n marbles -c '{"Args":["queryMarbles","{\"selector\":{\"owner\":\"tom\"}}"]}'
-
-// Rich Query with Pagination (Only supported if CouchDB is used as state database):
-// peer chaincode query -C myc1 -n marbles -c '{"Args":["queryMarblesWithPagination","{\"selector\":{\"owner\":\"tom\"}}","3",""]}'
 
 // ====CHAINCODE EXECUTION SAMPLES (CLI) ==================
 // peer chaincode invoke -C $CHANNEL_NAME -n organs -c '{"Args":["initOrgan","Organ001","heart","The very long json"]}'
@@ -69,9 +52,9 @@ let Chaincode = class {
   }
 
   // ===============================================
-  // initMarble - create a new organ
+  // initOrgan - create a new organ
   // ===============================================
-  // async initMarble(stub, args, thisClass) {
+
   async initOrgan(stub, args, thisClass) {
     if (args.length !=3) {
       throw new Error('Incorrect number of arguments. Expecting 4');
@@ -87,26 +70,13 @@ let Chaincode = class {
     if (args[2].lenth <= 0) {
       throw new Error('3rd argument must be a non-empty string');
     }
-    // if (args[3].lenth <= 0) {
-    //   throw new Error('4th argument must be a non-empty string');
-    // }
+
     let organID = args[0];
-    // let color = args[1].toLowerCase();
+  
     let type = args[1].toLowerCase();
 
-    // let owner = args[3].toLowerCase();
     let donorInfo = args[2].toLowerCase();
 
-    // let size = parseInt(args[2]);
-    // if (typeof size !== 'number') {
-    //   throw new Error('3rd argument must be a numeric string');
-    // }
-
-    // // ==== Check if marble already exists ====
-    // let marbleState = await stub.getState(marbleName);
-    // if (marbleState.toString()) {
-    //   throw new Error('This marble already exists: ' + marbleName);
-    // }
 
     // ==== Check if organ already exists ====
     let organState = await stub.getState(organID);
@@ -114,15 +84,8 @@ let Chaincode = class {
       throw new Error('This Organ already exists: ' + organID);
     }
 
-    // // ==== Create marble object and marshal to JSON ====
-    // let marble = {};
-    // marble.docType = 'marble';
-    // marble.name = marbleName;
-    // marble.color = color;
-    // marble.size = size;
-    // marble.owner = owner;
 
-    // ==== Create marble object and marshal to JSON ====
+    // ==== Create organ object and marshal to JSON ====
     let organ = {};
     organ.docType = 'organ';
     organ.organID = organID;
@@ -130,15 +93,10 @@ let Chaincode = class {
     organ.donorInfo = donorInfo;
     organ.owner = 'Donor';
 
-    // === Save marble to state ===
+    // === Save organ to state ===
     await stub.putState(organID, Buffer.from(JSON.stringify(organ)));
-    // let indexName = 'color~name'
-    // let colorNameIndexKey = await stub.createCompositeKey(indexName, [marble.color, marble.name]);
-    // console.info(colorNameIndexKey);
-    // //  Save index entry to state. Only the key name is needed, no need to store a duplicate copy of the marble.
-    // //  Note - passing a 'nil' value will effectively delete the key from state, therefore we pass null character as value
-    // await stub.putState(colorNameIndexKey, Buffer.from('\u0000'));
-    // ==== Marble saved and indexed. Return success ====
+    
+    // ==== organ saved and indexed. Return success ====
     console.info('- end init organ');
   }
 
@@ -160,16 +118,12 @@ let Chaincode = class {
       if (args[2].lenth <= 0) {
         throw new Error('3rd argument must be a non-empty string');
       }
-      // if (args[3].lenth <= 0) {
-      //   throw new Error('4th argument must be a non-empty string');
-      // }
+
       let candidateID = args[0];
-      // let color = args[1].toLowerCase();
       let candidateFor = args[1].toLowerCase();
-  
       let candidateInfo = args[2].toLowerCase();
   
-      // ==== Check if organ already exists ====
+      // ==== Check if Candidate already exists ====
       let candidateState = await stub.getState(candidateID);
       if (candidateState.toString()) {
         throw new Error('This Candidate already exists: ' + candidateID);
@@ -181,18 +135,42 @@ let Chaincode = class {
       candidate.candidateID = candidateID;
       candidate.candidateFor = candidateFor;
       candidate.candidateInfo = candidateInfo;
+      candidate.organ = "None";
+
+      // === Find a  match ===
+      availableOrgans = queryAllorgans()
+      for(const value of availableOrgans){
+        let organAsBytes = await stub.getState(value);
+        if (!organAsBytes || !organAsBytes.toString()) {
+          throw new Error('Organ does not exist');
+        }
+        let organToTransfer = {};
+        try {
+          organToTransfer = JSON.parse(organAsBytes.toString()); //unmarshal
+        } 
+        catch (err) {
+          let jsonResp = {};
+          jsonResp.error = 'Failed to decode JSON of: ' + organID;
+          throw new Error(jsonResp);
+        }
+        console.info(organToTransfer);
+        if(candidate.candidateInfo==organToTransfer.donorInfo){
+          organToTransfer.owner = newCandidate;
+          candidate.organ = organToTransfer.organID;
+        }
+        
+      }
   
-      // === Save marble to state ===
+      // === Save Candidate to state ===
       await stub.putState(candidateID, Buffer.from(JSON.stringify(candidate)));
     
-      // ==== Marble saved and indexed. Return success ====
+      // ==== Candidate saved and indexed. Return success ====
       console.info('- end init organ');
   }
 
   // ===============================================
-  // readOrgan - read a marble from chaincode state
+  // readOrgan - read a organ from chaincode state
   // ===============================================
-  // async readMarble(stub, args, thisClass) {
   async readOrgan(stub, args, thisClass) {
 
     if (args.length != 1) {
@@ -203,7 +181,7 @@ let Chaincode = class {
     if (!organID) {
       throw new Error(' organID must not be empty');
     }
-    let organAsbytes = await stub.getState(organID); //get the marble from chaincode state
+    let organAsbytes = await stub.getState(organID); //get the organ from chaincode state
     if (!organAsbytes.toString()) {
       let jsonResp = {};
       jsonResp.Error = 'Organ does not exist: ' + organID;
@@ -216,7 +194,7 @@ let Chaincode = class {
   }
 
   // ===============================================
-  // readCandidate - read a marble from chaincode state
+  // readCandidate - read a candidate from chaincode state
   // ===============================================
   async readCandidate(stub, args, thisClass) {
     if (args.length != 1) {
@@ -227,10 +205,10 @@ let Chaincode = class {
     if (!candidateID) {
       throw new Error(' candidateID  must not be empty');
     }
-    let candidateAsbytes = await stub.getState(candidateID); //get the marble from chaincode state
+    let candidateAsbytes = await stub.getState(candidateID); //get the candidate from chaincode state
     if (!candidateAsbytes.toString()) {
       let jsonResp = {};
-      jsonResp.Error = 'Marble does not exist: ' + candidateID;
+      jsonResp.Error = 'Candidate does not exist: ' + candidateID;
       throw new Error(JSON.stringify(jsonResp));
     }
     console.info('=======================================');
@@ -238,43 +216,6 @@ let Chaincode = class {
     console.info('=======================================');
     return candidateAsbytes;
   }
-
-
-  // ===========================================================
-  // transfer a organ by setting a new owner candidateID on the organ.
-  // By default organ owner is donor.
-  // ===========================================================
-  // async transferMarble(stub, args, thisClass) {
-  //   //   0       1
-  //   // 'name', 'bob'
-  //   if (args.length < 2) {
-  //     throw new Error('Incorrect number of arguments. Expecting marblename and owner')
-  //   }
-
-  //   let marbleName = args[0];
-  //   let newOwner = args[1].toLowerCase();
-  //   console.info('- start transferMarble ', marbleName, newOwner);
-
-  //   let marbleAsBytes = await stub.getState(marbleName);
-  //   if (!marbleAsBytes || !marbleAsBytes.toString()) {
-  //     throw new Error('marble does not exist');
-  //   }
-  //   let marbleToTransfer = {};
-  //   try {
-  //     marbleToTransfer = JSON.parse(marbleAsBytes.toString()); //unmarshal
-  //   } catch (err) {
-  //     let jsonResp = {};
-  //     jsonResp.error = 'Failed to decode JSON of: ' + marbleName;
-  //     throw new Error(jsonResp);
-  //   }
-  //   console.info(marbleToTransfer);
-  //   marbleToTransfer.owner = newOwner; //change the owner
-
-  //   let marbleJSONasBytes = Buffer.from(JSON.stringify(marbleToTransfer));
-  //   await stub.putState(marbleName, marbleJSONasBytes); //rewrite the marble
-
-  //   console.info('- end transferMarble (success)');
-  // }
 
   async transferOrgan(stub, args, thisClass) {
     //   0       1
@@ -284,13 +225,18 @@ let Chaincode = class {
     }
 
     let organID = args[0];
-    let newCandidate = args[1].toLowerCase();
+    let newCandidate = args[1];
     console.info('- start transferOrgan ', organID, newCandidate);
 
     let organAsBytes = await stub.getState(organID);
     if (!organAsBytes || !organAsBytes.toString()) {
       throw new Error('Organ does not exist');
     }
+    let candidateAsBytes = await stub.getState(newCandidate);
+    if (!candidateAsBytes || !candidateAsBytes.toString()) {
+      throw new Error('Candidate does not exist');
+    }
+    // Updating Organ Entry
     let organToTransfer = {};
     try {
       organToTransfer = JSON.parse(organAsBytes.toString()); //unmarshal
@@ -303,14 +249,73 @@ let Chaincode = class {
     organToTransfer.owner = newCandidate; //change the owner
 
     let organJSONasBytes = Buffer.from(JSON.stringify(organToTransfer));
-    await stub.putState(organID, organJSONasBytes); //rewrite the marble
+    await stub.putState(organID, organJSONasBytes); //rewrite the candidate
+
+  // Updating Candidate Entry 
+  let candidateToTransfer = {};
+    try {
+      candidateToTransfer = JSON.parse(candidateAsBytes.toString()); //unmarshal
+    } catch (err) {
+      let jsonResp = {};
+      jsonResp.error = 'Failed to decode JSON of: ' + newCandidate;
+      throw new Error(jsonResp);
+    }
+    console.info(candidateToTransfer);
+    candidateToTransfer.organ = organID; //change the owner
+
+    let candidateJSONasBytes = Buffer.from(JSON.stringify(candidateToTransfer));
+    await stub.putState(newCandidate, candidateJSONasBytes); //rewrite the candidate
+
 
     console.info('- end transferOrgan (success)');
   }
 
+  async readCandidateByMathched(stub, args, thisClass) {
+    if (args.length != 1) {
+      throw new Error('Incorrect number of arguments. Expecting ID of the Candidate to query');
+    }
 
+    let candidateID = args[0];
+    if (!candidateID) {
+      throw new Error(' candidateID  must not be empty');
+    }
+    let organ = "None"
+    let candidateAsbytes = await stub.getStateByRange(); //get the candidate from chaincode state
+    if (!candidateAsbytes.toString()) {
+      let jsonResp = {};
+      jsonResp.Error = 'Candidate does not exist: ' + candidateID;
+      throw new Error(JSON.stringify(jsonResp));
+    }
+    try {
+      for(i = 0; i<candidateAsbytes.length; i++){
+      candidate = JSON.parse(candidateAsbytes.pop().toString()); //unmarshal
+      console.log(candidate.candidateID)
+      console.log(candidate.organ)
+      }
+    } catch (err) {
+      let jsonResp = {};
+      jsonResp.error = 'Failed to decode JSON of: ' + organID;
+      throw new Error(jsonResp);
+    }
+    console.info('=======================================');
+    console.log(candidateAsbytes.toString());
+    console.info('=======================================');
+    creator = stub.getCreator()
+    txID = stub.getTxID()
+    console.log(creator)
+    console.log(txID)
+    txTimestamp = stub.txTimestamp()
+    console.log(txTimestamp)
 
-  async getAllResults(iterator, isHistory) {
+    return candidateAsbytes;
+  }
+  async queryAllorgans(stub, args) {
+
+    let startKey = '';
+    let endKey = '';
+
+    let iterator = await stub.getStateByRange(startKey, endKey);
+
     let allResults = [];
     while (true) {
       let res = await iterator.next();
@@ -319,36 +324,61 @@ let Chaincode = class {
         let jsonRes = {};
         console.log(res.value.value.toString('utf8'));
 
-        if (isHistory && isHistory === true) {
-          jsonRes.TxId = res.value.tx_id;
-          jsonRes.Timestamp = res.value.timestamp;
-          jsonRes.IsDelete = res.value.is_delete.toString();
-          try {
-            jsonRes.Value = JSON.parse(res.value.value.toString('utf8'));
-          } catch (err) {
-            console.log(err);
-            jsonRes.Value = res.value.value.toString('utf8');
-          }
-        } else {
-          jsonRes.Key = res.value.key;
-          try {
-            jsonRes.Record = JSON.parse(res.value.value.toString('utf8'));
-          } catch (err) {
-            console.log(err);
-            jsonRes.Record = res.value.value.toString('utf8');
-          }
+        jsonRes.Key = res.value.key;
+        try {
+          jsonRes.Record = JSON.parse(res.value.value.toString('utf8'));
+          console.log(jsonRes.Record.organ)
+        } catch (err) {
+          console.log(err);
+          jsonRes.Record = res.value.value.toString('utf8');
         }
-        allResults.push(jsonRes);
+        if(jsonRes.Record.organ=="None"){
+          allResults.push(jsonRes.Record.candidateID);
+        }
       }
       if (res.done) {
         console.log('end of data');
         await iterator.close();
         console.info(allResults);
-        return allResults;
+        return Buffer.from(JSON.stringify(allResults));
       }
     }
   }
+  async queryAllcandidates(stub, args) {
 
+    let startKey = '';
+    let endKey = '';
+
+    let iterator = await stub.getStateByRange(startKey, endKey);
+
+    let allResults = [];
+    while (true) {
+      let res = await iterator.next();
+
+      if (res.value && res.value.value.toString()) {
+        let jsonRes = {};
+        console.log(res.value.value.toString('utf8'));
+
+        jsonRes.Key = res.value.key;
+        try {
+          jsonRes.Record = JSON.parse(res.value.value.toString('utf8'));
+          console.log(jsonRes.Record.owner)
+        } catch (err) {
+          console.log(err);
+          jsonRes.Record = res.value.value.toString('utf8');
+        }
+        if(jsonRes.Record.owner=="Donor"){
+          allResults.push(jsonRes.Record.candidateID);
+        }
+      }
+      if (res.done) {
+        console.log('end of data');
+        await iterator.close();
+        console.info(allResults);
+        return Buffer.from(JSON.stringify(allResults));
+      }
+    }
+  }
 
 };
 

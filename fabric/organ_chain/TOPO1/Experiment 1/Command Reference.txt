@@ -10,7 +10,7 @@ Steps for the experiment.
         export FABRIC_CFG_PATH=$PWD
         rm -rf ./channel-artifacts/*
 #        i. Create Genesis block
-            
+            mkdir channel-artifacts
             configtxgen -profile OrganChainOrdererGenesis \
                 -channelID organ-sys-channel -outputBlock ./channel-artifacts/genesis.block
         
@@ -42,7 +42,7 @@ Steps for the experiment.
 #    a. Start Docker Nodes
         export COMPOSE_PROJECT_NAME=''
         docker-compose -p '' -f  docker-compose-cli.yaml up -d 
-    
+#       Move chaincode in cli container
 #    b. Create Channel
         docker exec -it cli bash
 
@@ -161,7 +161,7 @@ Steps for the experiment.
             --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/organ.com/orderers/orderer.organ.com/msp/tlscacerts/tlsca.organ.com-cert.pem
        
 
-     
+    
 #    e. Run peer chaincode 
 #        i. Init
 #            1. For hospital
@@ -235,7 +235,7 @@ Steps for the experiment.
 #        iii. Invoke
             peer chaincode invoke -o orderer.organ.com:7050 --tls true \
             --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/organ.com/orderers/orderer.organ.com/msp/tlscacerts/tlsca.organ.com-cert.pem
-            -C $CHANNEL_NAME -n organcc \
+            -C organ-channel -n organcc \
             --peerAddresses peer0.hospital.organ.com:7051 \
             --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/hospital.organ.com/peers/peer0.hospital.organ.com/tls/ca.crt \
             --peerAddresses peer0.gp.organ.com:7051 \
@@ -297,7 +297,7 @@ Steps for the experiment.
     docker rm -f $(docker ps -aq)
 #2. Remove all unused volumes and networks
     docker network prune
-    Y | docker volume prune
+    docker volume prune
 
 3. Discover
     Persisting configuration 
