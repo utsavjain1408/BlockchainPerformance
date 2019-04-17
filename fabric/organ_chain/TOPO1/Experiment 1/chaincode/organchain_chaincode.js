@@ -56,6 +56,7 @@ let Chaincode = class {
   // ===============================================
 
   async initOrgan(stub, args, thisClass) {
+    console.info("This is chaincode version 123.")
     if (args.length !=3) {
       throw new Error('Incorrect number of arguments. Expecting 4');
     }
@@ -138,35 +139,83 @@ let Chaincode = class {
       candidate.organ = "None";
 
       // === Find a  match ===
-      availableOrgans = queryAllorgans()
-      for(const value of availableOrgans){
+      // availableOrgans = queryAllorgans()
+      let startKey = '';
+      let endKey = '';
+
+      let iterator = await stub.getStateByRange(startKey, endKey);
+
+      let allResults = [];
+      let donorInfoJSON = {};
+      console.info("Looping through the iterator")
+      while (true) {
+        let res = await iterator.next();
+
+        if (res.value && res.value.value.toString()) {
+          let jsonRes = {};
+          console.info(res.value.value.toString('utf8'));
+
+          jsonRes.Key = res.value.key;
+          try {
+            jsonRes.Record = JSON.parse(res.value.value.toString('utf8'));
+            console.info(jsonRes.Record.owner);
+            console.info("Look Here for [jsonRes.Key] -> " + typeof(JSON.parse(jsonRes.Record.donorInfo)));
+            donorInfoJSON = JSON.parse(jsonRes.Record.donorInfo);
+            console.info("Look Here for [donorInfoJSON.legally_brain_dead]" + donorInfoJSON.legally_brain_dead);
+          } catch (err) {
+            console.info(err);
+            jsonRes.Record = res.value.value.toString('utf8');
+          }
+          if(jsonRes.Record.owner=="Donor"){
+            allResults.push(jsonRes.Record.organID);
+          }
+        }
+        if (res.done) {
+          console.info('end of data');
+          await iterator.close();
+          console.info(allResults);
+          break;
+        }
+      
+      }
+      // ====================================
+      // Starting transfer
+      // ====================================
+      let organID;
+      let organToTransfer = {};
+      for(const value of allResults){
         let organAsBytes = await stub.getState(value);
         if (!organAsBytes || !organAsBytes.toString()) {
           throw new Error('Organ does not exist');
         }
-        let organToTransfer = {};
+       
         try {
           organToTransfer = JSON.parse(organAsBytes.toString()); //unmarshal
         } 
         catch (err) {
           let jsonResp = {};
-          jsonResp.error = 'Failed to decode JSON of: ' + organID;
+          jsonResp.error = 'Failed to decode JSON of: ' + value;
           throw new Error(jsonResp);
         }
         console.info(organToTransfer);
+        console.info("Candidate.candidateInfo = " + (candidate.candidateInfo))
+        console.info("Organ.donorInfo = " + (organToTransfer.donorInfo))
+        console.info("Look Here -> " + organToTransfer.donorInfo.legally_brain_dead)
         if(candidate.candidateInfo==organToTransfer.donorInfo){
-          organToTransfer.owner = newCandidate;
+          organToTransfer.owner = candidateID;
           candidate.organ = organToTransfer.organID;
+          organID = organToTransfer.organID;
+          break;
         }
         
       }
   
       // === Save Candidate to state ===
       await stub.putState(candidateID, Buffer.from(JSON.stringify(candidate)));
-    
+      await stub.putState(organID, Buffer.from(JSON.stringify(organToTransfer)));
       // ==== Candidate saved and indexed. Return success ====
       console.info('- end init organ');
-  }
+    }
 
   // ===============================================
   // readOrgan - read a organ from chaincode state
@@ -188,7 +237,7 @@ let Chaincode = class {
       throw new Error(JSON.stringify(jsonResp));
     }
     console.info('=======================================');
-    console.log(organAsbytes.toString());
+    console.info(organAsbytes.toString());
     console.info('=======================================');
     return organAsbytes;
   }
