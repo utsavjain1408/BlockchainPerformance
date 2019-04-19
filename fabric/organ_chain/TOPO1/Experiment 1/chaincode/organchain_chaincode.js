@@ -93,7 +93,104 @@ let Chaincode = class {
     organ.type = type;
     organ.donorInfo = donorInfo;
     organ.owner = 'Donor';
+    // ====== Find and match to a candidate ===========//
+    // === Find a  match ===
+      let startKey = '';
+      let endKey = '';
+      let iterator = await stub.getStateByRange(startKey, endKey);
+      let allResults = [];
+      let candidateInfoJSON = {};
+      console.info("Looping through the iterator 125")
+      while (true) {
+        let res = await iterator.next();
+        if (res.value && res.value.value.toString()) {
+          let jsonRes = {};
+          console.info(res.value.value.toString('utf8'));
 
+          jsonRes.Key = res.value.key;
+          try {
+            jsonRes.Record = JSON.parse(res.value.value.toString('utf8'));
+            // console.info(jsonRes.Record.owner);
+            // console.info("Look Here for [jsonRes.Key] -> " + typeof(JSON.parse(jsonRes.Record.donorInfo)));
+            candidateInfoJSON = JSON.parse(jsonRes.Record.candidateInfo);
+            // console.info("Look Here for [donorInfoJSON.legally_brain_dead]" + donorInfoJSON.legally_brain_dead);
+          } catch (err) {
+            console.info(err);
+            jsonRes.Record = res.value.value.toString('utf8');
+          }
+          if(jsonRes.Record.organ=="None"){
+            allResults.push(jsonRes.Record.candidateID);
+          }
+        }
+        if (res.done) {
+          console.info('end of data');
+          await iterator.close();
+          console.info("Available Candidates are "+ allResults);
+          break;
+        }
+      
+      }
+      // ====================================
+      // Starting transfer
+      // ====================================
+      let candidateID;
+      let keys= [];
+      let candidateToTransfer = {};
+      let organInfoinJSON = {};
+      let candidateInfoinJSON = {};
+      let matchPerCent = 0;
+      for(const value of allResults){
+        let candidateAsBytes = await stub.getState(value);
+        if (!candidateAsBytes || !candidateAsBytes.toString()) {
+          throw new Error('Candidate does not exist');
+        }
+       
+        try {
+          candidateToTransfer = JSON.parse(candidateAsBytes.toString()); //unmarshal
+        } 
+        catch (err) {
+          let jsonResp = {};
+          jsonResp.error = 'Failed to decode JSON of: ' + value;
+          throw new Error(jsonResp);
+        }
+        console.log(candidateToTransfer);
+        
+        // ============ Print Candidate Info
+        console.info("Starting to Printing Matched Candidate's Info's Keys")
+        organInfoinJSON = JSON.parse(organ.donorInfo);
+        candidateInfoinJSON = JSON.parse(candidateToTransfer.candidateInfo);
+        keys = Object.keys(organInfoinJSON)
+        for(var key in keys){
+          
+          if(organInfoinJSON[keys[key]]==candidateInfoinJSON[keys[key]]){
+            matchPerCent+=1
+          } 
+        }
+        console.info("Done Printing Matched Donor's Info's Keys")
+        // console.info("Look Here -> " + organ.donorInfo.legally_brain_dead)
+        // ============ End Print Donor Info
+        //If the match percent is greater than 90, then transfer
+        matchPerCent = matchPerCent/keys.length
+        if((matchPerCent)>=0.90){
+          console.info("The match percent is "+ matchPerCent)
+          console.info("Matching "+ organ.organID +" to "+ candidateToTransfer.candidateID)
+          organ.owner = candidateToTransfer.candidateID;
+          candidateToTransfer.organ = organID;
+          await stub.putState(candidateToTransfer.candidateID, Buffer.from(JSON.stringify(candidateToTransfer)));
+          break;
+        }
+        else{
+          console.info("The match percent is "+ matchPerCent)
+          console.info("Cannot find any candidate for organ " + organ.organID)
+        }
+        
+      }
+  
+      // === Save Candidate to state ===
+      await stub.putState(candidateToTransfer.candidateID, Buffer.from(JSON.stringify(candidateToTransfer)));
+      console.info("initOrgan[Transaction ID] :" + stub.getTxID())
+      console.info("initOrgan[Transaction Timestamp] :" + Date.parse(stub.getTxTimestamp()))
+    // ====== Done Matching ===========================//
     // === Save organ to state ===
     await stub.putState(organID, Buffer.from(JSON.stringify(organ)));
     
@@ -142,15 +239,12 @@ let Chaincode = class {
       // availableOrgans = queryAllorgans()
       let startKey = '';
       let endKey = '';
-
       let iterator = await stub.getStateByRange(startKey, endKey);
-
       let allResults = [];
       let donorInfoJSON = {};
-      console.info("Looping through the iterator")
+      console.info("Looping through the iterator 124")
       while (true) {
         let res = await iterator.next();
-
         if (res.value && res.value.value.toString()) {
           let jsonRes = {};
           console.info(res.value.value.toString('utf8'));
@@ -158,10 +252,10 @@ let Chaincode = class {
           jsonRes.Key = res.value.key;
           try {
             jsonRes.Record = JSON.parse(res.value.value.toString('utf8'));
-            console.info(jsonRes.Record.owner);
-            console.info("Look Here for [jsonRes.Key] -> " + typeof(JSON.parse(jsonRes.Record.donorInfo)));
+            // console.info(jsonRes.Record.owner);
+            // console.info("Look Here for [jsonRes.Key] -> " + typeof(JSON.parse(jsonRes.Record.donorInfo)));
             donorInfoJSON = JSON.parse(jsonRes.Record.donorInfo);
-            console.info("Look Here for [donorInfoJSON.legally_brain_dead]" + donorInfoJSON.legally_brain_dead);
+            // console.info("Look Here for [donorInfoJSON.legally_brain_dead]" + donorInfoJSON.legally_brain_dead);
           } catch (err) {
             console.info(err);
             jsonRes.Record = res.value.value.toString('utf8');
@@ -173,7 +267,7 @@ let Chaincode = class {
         if (res.done) {
           console.info('end of data');
           await iterator.close();
-          console.info(allResults);
+          console.info("Available organs are "+ allResults);
           break;
         }
       
@@ -182,7 +276,11 @@ let Chaincode = class {
       // Starting transfer
       // ====================================
       let organID;
+      let keys= [];
       let organToTransfer = {};
+      let organInfoinJSON = {};
+      let candidateInfoinJSON = {};
+      let matchPerCent = 0;
       for(const value of allResults){
         let organAsBytes = await stub.getState(value);
         if (!organAsBytes || !organAsBytes.toString()) {
@@ -197,22 +295,45 @@ let Chaincode = class {
           jsonResp.error = 'Failed to decode JSON of: ' + value;
           throw new Error(jsonResp);
         }
-        console.info(organToTransfer);
-        console.info("Candidate.candidateInfo = " + (candidate.candidateInfo))
-        console.info("Organ.donorInfo = " + (organToTransfer.donorInfo))
+        console.log(organToTransfer);
+        
+        // ============ Print Donor Info
+        console.info("Starting to Printing Matched Donor's Info's Keys")
+        organInfoinJSON = JSON.parse(organToTransfer.donorInfo);
+        candidateInfoinJSON = JSON.parse(candidate.candidateInfo);
+        keys = Object.keys(organInfoinJSON)
+        for(var key in keys){
+          
+          if(organInfoinJSON[keys[key]]==candidateInfoinJSON[keys[key]]){
+            matchPerCent+=1
+          } 
+        }
+        console.info("Done Printing Matched Donor's Info's Keys")
         console.info("Look Here -> " + organToTransfer.donorInfo.legally_brain_dead)
-        if(candidate.candidateInfo==organToTransfer.donorInfo){
+        // ============ End Print Donor Info
+        //If the match percent is greater than 90, then transfer
+        matchPerCent = matchPerCent/keys.length
+        if((matchPerCent)>=0.90){
+          console.info("The match percent is "+ matchPerCent)
+          console.info("Transfering "+ organToTransfer.organID +" to "+ candidateID)
           organToTransfer.owner = candidateID;
           candidate.organ = organToTransfer.organID;
           organID = organToTransfer.organID;
+          await stub.putState(organID, Buffer.from(JSON.stringify(organToTransfer)));
           break;
+        }
+        else{
+          console.info("The match percent is "+ matchPerCent)
+          console.info("Cannot transfer any organ to " + candidateID)
         }
         
       }
   
       // === Save Candidate to state ===
       await stub.putState(candidateID, Buffer.from(JSON.stringify(candidate)));
-      await stub.putState(organID, Buffer.from(JSON.stringify(organToTransfer)));
+      console.info("initCandidate[Transaction ID] :" + stub.getTxID())
+      console.info("initCandidate[Transaction Timestamp] :" + Date.parse(stub.getTxTimestamp()))
+      console.info("initCandidate[Transaction Timestamp] :" +(stub.getTxTimestamp()))
       // ==== Candidate saved and indexed. Return success ====
       console.info('- end init organ');
     }
