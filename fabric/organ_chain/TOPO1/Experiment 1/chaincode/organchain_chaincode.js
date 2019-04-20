@@ -85,7 +85,6 @@ let Chaincode = class {
       throw new Error('This Organ already exists: ' + organID);
     }
 
-
     // ==== Create organ object and marshal to JSON ====
     let organ = {};
     organ.docType = 'organ';
@@ -105,12 +104,12 @@ let Chaincode = class {
         let res = await iterator.next();
         if (res.value && res.value.value.toString()) {
           let jsonRes = {};
-          console.info(res.value.value.toString('utf8'));
+          // console.info(res.value.value.toString('utf8'));
 
           jsonRes.Key = res.value.key;
           try {
             jsonRes.Record = JSON.parse(res.value.value.toString('utf8'));
-            // console.info(jsonRes.Record.owner);
+            console.info(jsonRes.Record.owner);
             // console.info("Look Here for [jsonRes.Key] -> " + typeof(JSON.parse(jsonRes.Record.donorInfo)));
             candidateInfoJSON = JSON.parse(jsonRes.Record.candidateInfo);
             // console.info("Look Here for [donorInfoJSON.legally_brain_dead]" + donorInfoJSON.legally_brain_dead);
@@ -158,8 +157,11 @@ let Chaincode = class {
         // ============ Print Candidate Info
         console.info("Starting to Printing Matched Candidate's Info's Keys")
         organInfoinJSON = JSON.parse(organ.donorInfo);
+        
         candidateInfoinJSON = JSON.parse(candidateToTransfer.candidateInfo);
+        console.info("Getting Keys")
         keys = Object.keys(organInfoinJSON)
+        console.info("Starting Keys Matching")
         for(var key in keys){
           
           if(organInfoinJSON[keys[key]]==candidateInfoinJSON[keys[key]]){
@@ -176,7 +178,8 @@ let Chaincode = class {
           console.info("Matching "+ organ.organID +" to "+ candidateToTransfer.candidateID)
           organ.owner = candidateToTransfer.candidateID;
           candidateToTransfer.organ = organID;
-          await stub.putState(candidateToTransfer.candidateID, Buffer.from(JSON.stringify(candidateToTransfer)));
+          candidateID = candidateToTransfer.candidateID;
+          await stub.putState(candidateID, Buffer.from(JSON.stringify(candidateToTransfer)));
           break;
         }
         else{
@@ -187,7 +190,8 @@ let Chaincode = class {
       }
   
       // === Save Candidate to state ===
-      await stub.putState(candidateToTransfer.candidateID, Buffer.from(JSON.stringify(candidateToTransfer)));
+      // candidateID = candidateToTransfer.candidateID
+      // await stub.putState(candidateToTransfer.candidateID, Buffer.from(JSON.stringify(candidateToTransfer)));
       console.info("initOrgan[Transaction ID] :" + stub.getTxID())
       console.info("initOrgan[Transaction Timestamp] :" + Date.parse(stub.getTxTimestamp()))
     // ====== Done Matching ===========================//
