@@ -26,6 +26,9 @@ class PeerContainer:
         self.comitted_blocks = []
         self.block_times = {}
         #make three dictionaries
+
+    def __str__(self):
+        return(str(self.name))
         
     def print_logs(self):
         ''' This method prints the contents of the log file line by line. '''
@@ -102,7 +105,7 @@ class Block:
     def get_smallest_commit_time():
         pass
     
-    def get_propogation_time(self, peers=all_peers):
+    def get_propogation_time(self, peers):
         commit_times = []
         receive_times = []
         for peer in self.peers_times:
